@@ -4,10 +4,15 @@ set(MODULE_NAME SlicerTrameServer)
 #-----------------------------------------------------------------------------
 set(MODULE_PYTHON_SCRIPTS
   ${MODULE_NAME}.py
+  tests/__init__.py
+  tests/test_slicer_trame_server.py
   )
 
 set(MODULE_PYTHON_RESOURCES
-  Resources/Icons/${MODULE_NAME}.png
+  Resources/Icons/SlicerTrameServer.png
+  Resources/Icons/start_icon.png
+  Resources/Icons/stop_icon.png
+  Resources/Examples/minimal_trame_slicer_app.py
   )
 
 #-----------------------------------------------------------------------------

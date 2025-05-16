@@ -1,7 +1,13 @@
+"""
+Minimal example of starting a trame-slicer server for testing and integration purposes.
+
+For a more complete example, please take a look at : https://github.com/KitwareMedical/trame-slicer/blob/main/examples/medical_viewer_app.py
+"""
+
 from trame.app import get_server
 from trame.decorators import TrameApp, change
 from trame.widgets import vuetify3
-from trame_client.widgets.html import Div, Input, Span
+from trame_client.widgets.html import Div
 from trame_vuetify.ui.vuetify3 import SinglePageLayout
 
 from trame_slicer.core import LayoutManager, SlicerApp
@@ -24,9 +30,7 @@ class MyTrameSlicerApp:
             self._server.ui.layout_grid,
         )
 
-        self._layout_manager.register_layout_dict(
-            LayoutManager.default_grid_configuration()
-        )
+        self._layout_manager.register_layout_dict(LayoutManager.default_grid_configuration())
 
         self._build_ui()
 

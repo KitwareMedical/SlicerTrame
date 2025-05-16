@@ -5,11 +5,11 @@ project(SlicerTrame)
 #-----------------------------------------------------------------------------
 # Extension meta-information
 set(EXTENSION_HOMEPAGE "https://www.slicer.org/wiki/Documentation/Nightly/Extensions/SlicerTrame")
-set(EXTENSION_CATEGORY "Examples")
+set(EXTENSION_CATEGORY "Servers")
 set(EXTENSION_CONTRIBUTORS "Thibault Pelletier (Kitware SAS)")
-set(EXTENSION_DESCRIPTION "This is an example of a simple extension")
-set(EXTENSION_ICONURL "https://www.example.com/Slicer/Extensions/SlicerTrame.png")
-set(EXTENSION_SCREENSHOTURLS "https://www.example.com/Slicer/Extensions/SlicerTrame/Screenshots/1.png")
+set(EXTENSION_DESCRIPTION "SlicerTrame is the 3D Slicer extension that regroups the different modules allowing the usage of the trame-slicer library in the 3D Slicer ecosystem")
+set(EXTENSION_ICONURL "https://github.com/KitwareMedical/SlicerTrame/raw/main/SlicerTrame.png")
+set(EXTENSION_SCREENSHOTURLS "https://github.com/KitwareMedical/trame-slicer/raw/main/docs/trame-slicer-medical-app-example.png")
 set(EXTENSION_DEPENDS "NA") # Specified as a list or "NA" if no dependencies
 
 #-----------------------------------------------------------------------------
