@@ -1,8 +1,12 @@
+from __future__ import annotations
+
+import logging
 from pathlib import Path
 from typing import Optional, Callable, Union
 
 import ctk
 import qt
+import requests
 import slicer
 from slicer.ScriptedLoadableModule import (
     ScriptedLoadableModule,
@@ -25,6 +29,41 @@ def resourcesPath() -> Path:
     return Path(__file__).parent / "Resources"
 
 
+def exampleDir() -> Path:
+    return resourcesPath().joinpath("Examples")
+
+
+def downloadExampleDir() -> Path:
+    return resourcesPath().joinpath("downloaded_examples") / trame_slicer_version()
+
+
+def medicalExamplePath() -> Path:
+    return downloadExampleDir() / "medical_viewer_app.py"
+
+
+def minimalExamplePath() -> Path:
+    return exampleDir().joinpath("minimal_trame_slicer_app.py")
+
+
+def trame_slicer_version() -> str:
+    try:
+        import trame_slicer
+
+        return f"v{trame_slicer.__version__}"
+    except ImportError:
+        return ""
+
+
+def srcZipFilePath() -> Path:
+    return downloadExampleDir() / f"trame_slicer_{trame_slicer_version()}.zip"
+
+
+def defaultExamplePath() -> Path:
+    if medicalExamplePath().exists():
+        return medicalExamplePath()
+    return minimalExamplePath()
+
+
 def iconPath(icon_name: str) -> str:
     return resourcesPath().joinpath("Icons", icon_name).as_posix()
 
@@ -45,7 +84,7 @@ class Widget(qt.QWidget):
         self._serverPathLineEdit.filters = ctk.ctkPathLineEdit.Files
         self._serverPathLineEdit.nameFilters = ["*.py"]
         self._serverPathLineEdit.toolTip = _("Path to the Slicer trame server entry point.")
-        self._serverPathLineEdit.currentPath = self._setting(self._serverPathSettingsKey, defaultValue="")
+
         layout.addRow("Server script path:", self._serverPathLineEdit)
 
         self._serverPort = qt.QSpinBox(self)
@@ -82,6 +121,20 @@ class Widget(qt.QWidget):
         self._lastError = ""
         self._onProcessFinished()
         self._ensureRequirements()
+        self.downloadExampleFiles(srcZipFilePath(), downloadExampleDir())
+        self._setServerPathToLastUsed()
+
+    def _setServerPathToLastUsed(self):
+        """
+        Set the path edit to the last path used.
+        If the last path is invalid, default example path will be used.
+        """
+        defaultPath = medicalExamplePath().resolve().as_posix()
+        lastPath = self._setting(self._serverPathSettingsKey, defaultPath)
+        if not Path(lastPath).is_file():
+            lastPath = defaultPath
+
+        self._serverPathLineEdit.currentPath = lastPath
 
     @staticmethod
     def _saveSetting(key, value):
@@ -186,8 +239,61 @@ class Widget(qt.QWidget):
         import importlib.util
 
         if importlib.util.find_spec("trame_slicer") is None:
-            slicer.util.delayDisplay("Installing trame-slicer")
-            slicer.util.pip_install("trame-slicer")
+            dialog = slicer.util.createProgressDialog(parent=None, maximum=0, labelText="Installing dependencies...")
+            dialog.setCancelButton(None)
+            dialog.show()
+            slicer.app.processEvents()
+
+            _error_msg = (
+                "Failed to install the python dependencies. Please check the python console for more information."
+            )
+            with slicer.util.tryWithErrorDisplay(_error_msg):
+                slicer.util.pip_install("trame-slicer")
+
+            dialog.hide()
+            dialog.deleteLater()
+
+    @staticmethod
+    def _downloadSrcZip(destPath: Path) -> bool:
+        url = f"https://github.com/KitwareMedical/trame-slicer/archive/refs/tags/{trame_slicer_version()}.zip"
+
+        response = requests.get(url, stream=True)
+        if response.status_code != 200:
+            _warn_msg = f"Failed to download zip file from {url}."
+            logging.warning(_warn_msg)
+            return False
+
+        destPath.parent.mkdir(exist_ok=True, parents=True)
+        with open(destPath, "wb") as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                file.write(chunk)
+        return True
+
+    @classmethod
+    def downloadExampleFiles(cls, zipPath: Path, destDir: Path) -> None:
+        """
+        Download the current trame-slicer examples present on the GitHub server to the Resources/downloaded_examples
+        folder.
+        """
+        import zipfile
+
+        # sources already downloaded and extracted
+        if zipPath.exists():
+            return
+
+        if not cls._downloadSrcZip(zipPath):
+            return
+
+        examplesPath = "examples/"
+        with zipfile.ZipFile(zipPath, "r") as zip_ref:
+            for fileZipName in zip_ref.namelist():
+                if fileZipName.endswith("/") or examplesPath not in fileZipName:
+                    continue
+
+                fileName = fileZipName.split(examplesPath)[-1]
+                filePath = destDir / fileName
+                filePath.parent.mkdir(parents=True, exist_ok=True)
+                filePath.write_bytes(zip_ref.read(fileZipName))
 
 
 class SlicerTrameServerWidget(ScriptedLoadableModuleWidget):

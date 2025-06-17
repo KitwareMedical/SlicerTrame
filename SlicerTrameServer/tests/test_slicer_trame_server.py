@@ -1,4 +1,6 @@
+import os
 import time
+from pathlib import Path
 
 import pytest
 import qt
@@ -32,3 +34,14 @@ def test_can_launch_slicer_trame_example(a_widget):
     assert not a_widget.startButton.isEnabled()
     assert a_widget.stopButton.isEnabled()
     assert a_widget.getLastError() == ""
+
+
+def test_can_download_trame_example_files(tmpdir):
+    dest_dir = Path(tmpdir)
+    zip_path = dest_dir / "a" / "subfolder" / "src.zip"
+
+    Widget.downloadExampleFiles(zip_path, dest_dir)
+
+    assert zip_path.exists()
+    assert list(dest_dir.glob("*.py"))
+    assert len(os.listdir(tmpdir)) > 0
