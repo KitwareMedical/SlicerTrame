@@ -46,6 +46,9 @@ set(SlicerTrame_CUSTOM_CONFIG "####### Expanded from \@SlicerTrame_CUSTOM_CONFIG
 set(vtkWebCore_DIR \"${vtkWebCore_DIR}\")
 find_package(vtkWebCore REQUIRED)
 
+set(vtkWebGLExporter_DIR \"${vtkWebGLExporter_DIR}\")
+find_package(vtkWebGLExporter REQUIRED)
+
 ##################################################
 ")
 include(${Slicer_EXTENSION_GENERATE_CONFIG})
@@ -54,9 +57,15 @@ include(${Slicer_EXTENSION_GENERATE_CONFIG})
 set(EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS)
 
 # vtkWebCore
-list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${vtkWebCore_DIR};vtkWebCore;runtime;/")
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${vtkWebCore_DIR};vtkWebCore;;runtime;/")
 if(Slicer_USE_PYTHONQT)
   list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${vtkWebCore_DIR};vtkWebCore;python;/")
+endif()
+
+# vtkWebGLExporter
+list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${vtkWebGLExporter_DIR};vtkWebGLExporter;;runtime;/")
+if(Slicer_USE_PYTHONQT)
+  list(APPEND EXTENSION_CPACK_INSTALL_CMAKE_PROJECTS "${vtkWebGLExporter_DIR};vtkWebGLExporter;python;/")
 endif()
 
 
