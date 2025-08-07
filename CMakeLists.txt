@@ -4,7 +4,7 @@ project(SlicerTrame)
 
 #-----------------------------------------------------------------------------
 # Extension meta-information
-set(EXTENSION_HOMEPAGE "https://www.slicer.org/wiki/Documentation/Nightly/Extensions/SlicerTrame")
+set(EXTENSION_HOMEPAGE "https://github.com/KitwareMedical/SlicerTrame")
 set(EXTENSION_CATEGORY "Servers")
 set(EXTENSION_CONTRIBUTORS "Thibault Pelletier (Kitware SAS)")
 set(EXTENSION_DESCRIPTION "SlicerTrame is the 3D Slicer extension that regroups the different modules allowing the usage of the trame-slicer library in the 3D Slicer ecosystem")
@@ -41,7 +41,7 @@ add_subdirectory(SlicerTrameServer)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------
-set(SlicerTrame_CUSTOM_CONFIG "####### Expanded from \@SlicerTrame_CUSTOM_CONFIG\@ #######
+set(${EXTENSION_NAME}_CUSTOM_CONFIG "####### Expanded from \@${EXTENSION_NAME}_CUSTOM_CONFIG\@ #######
 
 set(vtkWebCore_DIR \"${vtkWebCore_DIR}\")
 find_package(vtkWebCore REQUIRED)

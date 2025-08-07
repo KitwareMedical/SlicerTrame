@@ -15,23 +15,23 @@ endif()
 # build external projects associated with VTK modules enabled below.
 if(DEFINED Slicer_SOURCE_DIR)
   # Extension is bundled in a custom application
-  set(SlicerTrame_EXTERNAL_PROJECT_DEPENDENCIES "")
+  set(${EXTENSION_NAME}_EXTERNAL_PROJECT_DEPENDENCIES "")
 else()
   # Extension is build standalone against Slicer itself built
   # against VTK without the relevant modules enabled.
-  set(SlicerTrame_EXTERNAL_PROJECT_DEPENDENCIES
+  set(${EXTENSION_NAME}_EXTERNAL_PROJECT_DEPENDENCIES
     vtkWebCore
     vtkWebGLExporter
   )
 endif()
-message(STATUS "SlicerTrame_EXTERNAL_PROJECT_DEPENDENCIES:${SlicerTrame_EXTERNAL_PROJECT_DEPENDENCIES}")
+message(STATUS "${EXTENSION_NAME}_EXTERNAL_PROJECT_DEPENDENCIES:${${EXTENSION_NAME}_EXTERNAL_PROJECT_DEPENDENCIES}")
 
 if(NOT DEFINED Slicer_SOURCE_DIR)
   # Extension is built standalone
   # VTKExternalModule is required to configure these external projects:
   # - vtkWebCore
   # - vtkWebGLExporter
-  include(${SlicerTrame_SOURCE_DIR}/FetchVTKExternalModule.cmake)
+  include(${${EXTENSION_NAME}_SOURCE_DIR}/FetchVTKExternalModule.cmake)
 
 else()
   # Extension is bundled in a custom application
