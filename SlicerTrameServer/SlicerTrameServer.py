@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import shutil
 from pathlib import Path
 from typing import Optional, Callable, Union
 
@@ -121,6 +122,7 @@ class Widget(qt.QWidget):
         self._lastError = ""
         self._onProcessFinished()
         self._ensureRequirements()
+        self._ensureVtkWebModules()
         self.downloadExampleFiles(srcZipFilePath(), downloadExampleDir())
         self._setServerPathToLastUsed()
 
@@ -252,6 +254,60 @@ class Widget(qt.QWidget):
 
             dialog.hide()
             dialog.deleteLater()
+
+    @staticmethod
+    def _ensureVtkWebModules():
+        """
+        VTK modules PYD files are not properly packaged in the python environment.
+        To be discovered, the files need to be copied from the extensions vtk modules folder to the application folder.
+        """
+
+        # Early return if built modules are already in vtk modules package
+        try:
+            from vtkmodules import vtkWebCore, vtkWebGLExporter  # noqa
+
+            return
+        except ImportError:
+            pass
+
+        # Find location of vtkmodules in the Slicer environment
+        import vtkmodules
+
+        vtkModulesPath = Path(vtkmodules.__file__).parent
+
+        # From the current folder, find the root of the extension files.
+        # File structure is organized as :
+        # Extensions-<...>/SlicerTrame/
+        #  ├───bin
+        #  │   └───Python
+        #  │       └───vtkmodules
+        #  ├───lib
+        #  │   └───Slicer-5.9
+        #  │       └───qt-scripted-modules
+        #  │           └───<SCRIPTED_MODULE_NAME>.py
+        currentFolder = Path(__file__).parent
+        paths = currentFolder.as_posix().split("/")
+        i_path = None
+        for i in reversed(range(len(paths))):
+            if "lib" in paths[i]:
+                i_path = i
+                break
+
+        # Early return if module is not running in an extension folder.
+        if i_path is None:
+            _warn_msg = "VTK web core modules are not correctly installed."
+            logging.warning(_warn_msg)
+            return
+
+        extensionModulePath = Path("/".join(paths[:i_path])) / "bin" / "Python" / "vtkmodules"
+        extensionModules = extensionModulePath.rglob("*.*")
+
+        try:
+            for pydFile in extensionModules:
+                shutil.copyfile(pydFile, vtkModulesPath / pydFile.name)
+        except OSError as e:
+            _warn_msg = f"Failed to copy vtk modules file to destination folder : {e}"
+            logging.warning(_warn_msg)
 
     @staticmethod
     def _downloadSrcZip(destPath: Path) -> bool:
