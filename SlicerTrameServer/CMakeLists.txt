@@ -12,7 +12,9 @@ set(MODULE_PYTHON_RESOURCES
   Resources/Icons/SlicerTrameServer.png
   Resources/Icons/start_icon.png
   Resources/Icons/stop_icon.png
+  Resources/Icons/upgrade_icon.png
   Resources/Examples/minimal_trame_slicer_app.py
+  Resources/slicer_trame_bootstrap_template.py
   )
 
 #-----------------------------------------------------------------------------

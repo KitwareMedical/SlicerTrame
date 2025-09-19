@@ -10,7 +10,7 @@ set(EXTENSION_CONTRIBUTORS "Thibault Pelletier (Kitware SAS)")
 set(EXTENSION_DESCRIPTION "SlicerTrame is the 3D Slicer extension that regroups the different modules allowing the usage of the trame-slicer library in the 3D Slicer ecosystem")
 set(EXTENSION_ICONURL "https://github.com/KitwareMedical/SlicerTrame/raw/main/SlicerTrame.png")
 set(EXTENSION_SCREENSHOTURLS "https://github.com/KitwareMedical/trame-slicer/raw/main/docs/trame-slicer-medical-app-example.png")
-set(EXTENSION_DEPENDS "NA") # Specified as a list or "NA" if no dependencies
+set(EXTENSION_DEPENDS "LayerDisplayableManager")
 
 #-----------------------------------------------------------------------------
 set(EXTENSION_BUILD_SUBDIRECTORY inner-build)
