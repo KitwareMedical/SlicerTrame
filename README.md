@@ -29,6 +29,8 @@ This module allows users to start and manage a Trame server directly from within
 2. **Server Configuration**:
    - Path to the Trame server entry point.
    - Port number on which the server will run.
+   - Host IP which will be used to launch the server (use 0.0.0.0 for broadcast)
+   - Extra server launch arguments
 3. **Server Management**:
    - Start/Stop functionality to manage the Trame server process.
    - Real-time logging of server output and errors.

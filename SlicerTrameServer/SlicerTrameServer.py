@@ -89,6 +89,8 @@ class Widget(qt.QWidget):
 
         self._serverPathSettingsKey = "SlicerTrameServer/ScriptPath"
         self._serverPortSettingsKey = "SlicerTrameServer/ServerPort"
+        self._serverHostSettingsKey = "SlicerTrameServer/ServerHost"
+        self._serverExtraArgsSettingsKey = "SlicerTrameServer/ServerExtraArgs"
 
         layout = qt.QFormLayout(self)
         self._trameSlicerVersionLabel = qt.QLabel(self)
@@ -125,6 +127,18 @@ class Widget(qt.QWidget):
         self._serverPort.toolTip = _("Port where the server will be bound")
         self._serverPort.value = self._setting(self._serverPortSettingsKey, defaultValue=0)
         layout.addRow(_("Server port:"), self._serverPort)
+
+        self._serverHost = qt.QLineEdit(self)
+        self._serverHost.toolTip = _("Host IP on which the server will be bound")
+        self._serverHost.text = self._setting(self._serverHostSettingsKey, defaultValue="")
+        self._serverHost.setPlaceholderText("127.0.0.1")
+        layout.addRow(_("Server host:"), self._serverHost)
+
+        self._serverExtraArgs = qt.QLineEdit(self)
+        self._serverExtraArgs.toolTip = _("White space separated extra CLI args passed to server at launch")
+        self._serverExtraArgs.text = self._setting(self._serverExtraArgsSettingsKey, defaultValue="")
+        self._serverExtraArgs.setPlaceholderText("--server")
+        layout.addRow(_("Extra launch args:"), self._serverExtraArgs)
 
         self.startButton = qt.QPushButton(_("Start Server"))
         self.startButton.clicked.connect(self._startServer)
@@ -199,6 +213,13 @@ class Widget(qt.QWidget):
     def setServerPath(self, path: str | Path):
         self._serverPathLineEdit.currentPath = Path(path).as_posix()
 
+    def setServerExtraArgs(self, extraArgs: str):
+        self._serverExtraArgs.text = extraArgs
+
+    def setServerConfig(self, serverPort: int = 0, serverHost: str = ""):
+        self._serverPort.value = serverPort
+        self._serverHost.text = serverHost
+
     @staticmethod
     def _saveSetting(key, value):
         settings = qt.QSettings()
@@ -213,7 +234,12 @@ class Widget(qt.QWidget):
             return defaultValue
 
     def _startServer(self, *_):
-        self.startTrameServer(self._serverPathLineEdit.currentPath, self._serverPort.value)
+        self.startTrameServer(
+            self._serverPathLineEdit.currentPath,
+            serverPort=self._serverPort.value,
+            serverHost=self._serverHost.text,
+            extraArgs=self._serverExtraArgs.text,
+        )
 
     def _onProcessStarted(self):
         self.startButton.setEnabled(False)
@@ -223,7 +249,14 @@ class Widget(qt.QWidget):
         self.startButton.setEnabled(True)
         self.stopButton.setEnabled(False)
 
-    def startTrameServer(self, scriptPath: Union[Path, str], port: int):
+    def startTrameServer(
+        self,
+        scriptPath: Union[Path, str],
+        *,
+        serverPort: int = 0,
+        serverHost: str = "",
+        extraArgs: str = "",
+    ):
         scriptPath = Path(scriptPath)
         if not scriptPath.is_file():
             if self._verbose:
@@ -232,15 +265,18 @@ class Widget(qt.QWidget):
 
         self._currentInfoTextEdit.clear()
         self._saveSetting(self._serverPathSettingsKey, scriptPath.as_posix())
-        self._saveSetting(self._serverPortSettingsKey, port)
+        self._saveSetting(self._serverPortSettingsKey, serverPort)
+        self._saveSetting(self._serverHostSettingsKey, serverHost)
+        self._saveSetting(self._serverExtraArgsSettingsKey, extraArgs)
 
-        args = [
-            "--python-script",
-            scriptPath.resolve().as_posix(),
-            "--port",
-            port,
-            "--no-main-window",
-        ]
+        args = self._appendCliArgs(
+            ["--python-script"],
+            scriptPath=scriptPath,
+            serverPort=serverPort,
+            serverHost=serverHost,
+            extraArgs=extraArgs + " --no-main-window",
+        )
+
         self._startProcess(
             self._slicerPath().as_posix(),
             args,
@@ -418,9 +454,10 @@ class Widget(qt.QWidget):
             return
 
         examplesPath = "examples/"
+        testsPath = "tests/"
         with zipfile.ZipFile(zipPath, "r") as zip_ref:
             for fileZipName in zip_ref.namelist():
-                if fileZipName.endswith("/") or examplesPath not in fileZipName:
+                if fileZipName.endswith("/") or testsPath in fileZipName or examplesPath not in fileZipName:
                     continue
 
                 fileName = fileZipName.split(examplesPath)[-1]
@@ -448,12 +485,46 @@ class Widget(qt.QWidget):
         return " ".join([f'"{cmd}"' if i_cmd < 3 else cmd for i_cmd, cmd in enumerate(cmdArgs)])
 
     def _getCurrentBootstrappedCommand(self, destPath: str | Path) -> list[str]:
-        return [
-            *self.createBootstrapCommandArgs(destPath),
-            self._serverPathLineEdit.currentPath,
+        return self._appendCliArgs(
+            self.createBootstrapCommandArgs(destPath),
+            scriptPath=self._serverPathLineEdit.currentPath,
+            serverPort=self._serverPort.value,
+            serverHost=self._serverHost.text,
+            extraArgs=self._serverExtraArgs.text,
+        )
+
+    @classmethod
+    def _appendCliArgs(
+        cls,
+        args: list[str],
+        *,
+        scriptPath: str | Path,
+        serverPort: int = 0,
+        serverHost: str = "",
+        extraArgs: str = "",
+    ):
+        args = [
+            *args,
+            Path(scriptPath).resolve().as_posix(),
             "--port",
-            str(self._serverPort.value),
+            str(serverPort),
         ]
+
+        if serverHost:
+            args.extend(["--host", serverHost])
+
+        if extraArgs:
+            args.extend(cls._splitExtraArgsByWhiteSpace(extraArgs))
+
+        return cls._sanitizeArgs(args)
+
+    @classmethod
+    def _splitExtraArgsByWhiteSpace(cls, extraArgs: str):
+        return str(extraArgs).split(" ")
+
+    @classmethod
+    def _sanitizeArgs(cls, args: list[str]):
+        return [a for a in args if a]
 
     @classmethod
     def createBootstrapFile(cls, destFilePath: str | Path, printableCommand: str) -> None:
